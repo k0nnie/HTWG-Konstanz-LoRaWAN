@@ -11,6 +11,7 @@ import sys
 
 MicDevices = ["test_mic_0", "test_mic_1"]
 DistanceDevices = ["test_distance_0", "test_distance_1"]
+AllDevices = MicDevices + DistanceDevices
 
 LAST30SECONDS = datetime.timedelta(seconds=30)
 LAST5MINUTES = datetime.timedelta(minutes=5)
@@ -39,7 +40,7 @@ def getData(time, device): #requests all uplink data from a device that was sent
             if (datetime.datetime.now() - lineTime) <= time:
                 if line.startswith(str(device)):
                     resultData.append(line)
-       return resultData
+    return resultData
 
 
 def filterData(time, devices):
