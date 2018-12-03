@@ -1,3 +1,4 @@
+					  
 #!/bin/sh
 
 import threading
@@ -7,44 +8,49 @@ import subprocess
 import sys
 #import thread
 
-class GetData:
-  def __init__(self):
-    self.pid = None
+MicDevices = ["test_mic_0", "test_mic_1"]
+DistanceDevices = ["test_distance_0", "test_distance_1"]
 
-  def dataPolling(self):
-    #catches any uplinks to TTN through our app
-    self.pid = subprocess.Popen([sys.executable,  'receiver.py'])
+def getData(time, device): #requests all uplink data from a device that was sent [time] ago. 
+    fullData = []
+    resultData = []
+    with open ('nodedata', 'r') as f:
+        fullData = f.readlines()
+        for line in fullData:
+            if line.startswith(str(device)):
+                resultData.append(line)
+    return resultData
 
-  def getDataTTN(self):
-    #subprocess.call('./getTTNdata.sh')
-    pass
 
-class TransformData:
+def filterData(time, devices):
+    data = []
+    for device in devices:
+        data.append(getData(time, device))
+    return data
+  
+def transformMicData(data): #creates array from messages, decodes payload, change time format to date:hh:mm:ss, 
+  pass
+ 
+def transformDistanceData():
+  pass
 
-  def DataFromXMinutes(rawdata): #stores data from the past X minutes seperatly so the most recent values can be used for transformation
-    pass
-  def transformData(rawdata): #contains main algorithm that needs to be callibrated to the real world situation
-    pass
-  def plotData(transformedData):
-    pass
-  def sendData(resultData): #send finished data or plots
-    pass
+def evaluateData(tMicData, tdistanceData):
+  pass
+  
+def sendData(resultData): #send finished data or plots
+  pass #change time to gmt+1
 
 def main():
-
-  data = GetData()
-  data.dataPolling()
-
-  while(True):
-    print("chose an option: \n")
-    x = input()
-    print(str(x))
-
+   # x = getData(None, "test_distance_0")
+   # y = getData(None, 'test_distance_1')
+   # fx = filterData(None, MicDevices)
+   # fy = filterData(None, DistanceDevices)
+   # print(str(fx) + "\n" + str(fy))
 if __name__ == "__main__":
   main()
 
 
-#main
 
-#routine to poll data in a thread and make it accessible for data transformation
-#call transformation and plotting and sending in intervals of X minutes or via trigger (if new data arrives and gets processed)
+
+
+
