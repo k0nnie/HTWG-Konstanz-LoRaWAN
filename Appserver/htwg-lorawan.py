@@ -8,9 +8,12 @@ import os
 import subprocess
 import sys
 #import thread
+import base64
+import codecs
 
 MICDEVICES = ["test_mic_0", "test_mic_1"]
 DISTANCEDEVICES = ["test_distance_0", "test_distance_1"]
+#WLANDEVICE = []
 ALLDEVICES = MICDEVICES + DISTANCEDEVICES
 
 #timedeltas to request the latest data
@@ -33,7 +36,7 @@ def timeToDatetime(time):
 def getData(time, device):
     fullData = []
     resultData = []
-    with open ('nodedata', 'r') as f:
+    with open ('nodedata2', 'r') as f:
         fullData = f.readlines()
         for line in fullData:
             lineTime = line.split(',')
@@ -45,35 +48,36 @@ def getData(time, device):
     return resultData
 
 #allows to filter data to match multiple devices and one timedelta
-def filterData(time, devices): #all data with filterData(ALLTIME, ALLDEVICES)
+def filterData(time, devices): #all data with filterData(ALLTIME, ALLDEVICES) but better (ALLTIME, MICDEVICES) + (ALLTIME, DISTANCEDEVICES)
     data = []
     for device in devices:
         data.append(getData(time, device))
     return data
 
-def transformMicData(data):
-  pass
+def transformMicData():
+    pass
 
-def transformDistanceData():
-  pass
-
+def transformDistanceData(data):
+    for value in data:
+        tmp  = str(value).split(",")
+        payload = tmp[1]
+        print(payload)
+        decoded = base64.b64decode(payload) #now in hex representation
+        decodedhex = ""
+        for c in decoded:
+            print(str(hex(c))[2:])
+            decodedhex = decodedhex + str(hex(c))[2:]
+        print(decodedhex)
 def evaluateData(tMicData, tdistanceData):
-  pass
+    pass
 
 def sendData(resultData):
   pass #change time to gmt+1
 
 def main():
 
-
-    x = getData(LAST2HOURS, "test_distance_0")
-    print(str(x))
+    x = getData(LASTDAY, "test_distance_0")
+    transformDistanceData(x)
 
 if __name__ == "__main__":
   main()
-
-
-
-
-
-
