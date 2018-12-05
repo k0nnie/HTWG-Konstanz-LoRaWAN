@@ -2,18 +2,17 @@
 #include <hal/hal.h>
 #include <SPI.h>
 
-#define MAX_CHANNELS;
-#define MAX_BANDS;
-#define LIMIT_CHANNELS;
-#define BAND_MILLI;
-#define BAND_CENTI;
-#define BAND_DECI;
-#define BAND_AUX;
 #define CFG_sx1276_radio 1
 //#define LMIC_USE_INTERRUPTS
-#define LMIC_DEBUG_LEVEL 2
 #define USE_ORIGINAL_AES
 //#define USE_IDEETRON_AES
+
+uint8_t roundup(double num);
+#define MICROPHONE_SAMPLES 20
+const uint8_t sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
+const unsigned TX_INTERVAL = 11 - roundup(MICROPHONE_SAMPLES * 0.05);
+static uint8_t mydata[MICROPHONE_SAMPLES];
+unsigned int sample;
 
 //
 // For normal use, we require that you edit the sketch to replace FILLMEIN
@@ -23,7 +22,7 @@
 // working but innocuous value.
 //
 #ifdef COMPILE_REGRESSION_TEST
-# define FILLMEIN 0
+# define FILLMEIN 1
 #else
 # warning "You must replace the values marked FILLMEIN with real values from the TTN control panel!"
 # define FILLMEIN (#dont edit this, edit the lines that use FILLMEIN)
@@ -47,13 +46,10 @@ void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 static const u1_t PROGMEM APPKEY[16] = { 0xA8, 0x67, 0xCE, 0xF5, 0xBE, 0xE2, 0xCD, 0x69, 0x84, 0x56, 0x02, 0x46, 0xE1, 0x53, 0x17, 0x0A }; // lora_node_01
 void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 
-static uint8_t mydata[] = "1111";
 static osjob_t sendjob;
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 60;
-
 // Pin mapping
 const lmic_pinmap lmic_pins = {
   .nss = 10,
@@ -175,7 +171,42 @@ void do_send(osjob_t* j){
         Serial.println(F("OP_TXRXPEND, not sending"));
     } else {
         // Prepare upstream data transmission at the next possible time.
-        LMIC_setTxData2(1, mydata, sizeof(mydata)-1, 0);
+        unsigned long startMillis= millis();  // Start of sample window
+        unsigned int peakToPeak = 0;   // peak-to-peak level
+
+        unsigned int signalMax = 0;
+        unsigned int signalMin = 1024;
+
+        for(int i = 0; i < MICROPHONE_SAMPLES; i++) {
+            // collect data for 50 mS
+            while (millis() - startMillis < sampleWindow)
+            {
+                sample = analogRead(0);
+                if (sample < 1024)  // toss out spurious readings
+                {
+                    if (sample > signalMax)
+                    {
+                        signalMax = sample;  // save just the max levels
+                    }
+                    else if (sample < signalMin)
+                    {
+                        signalMin = sample;  // save just the min levels
+                    }
+                }
+            }
+            peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
+            double volts = (peakToPeak * 5.0) / 1024;  // convert to volts
+            mydata[i] = (uint8_t)(volts * 100);
+        }
+        LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
+        Serial.print("[");
+        for(int i = 0; i < MICROPHONE_SAMPLES; i++) {
+            Serial.print(mydata[i]);
+            if(i != MICROPHONE_SAMPLES - 1) {
+                Serial.print(", ");
+            }
+        }
+        Serial.println("]");
         Serial.println(F("Packet queued"));
     }
     // Next TX is scheduled after TX_COMPLETE event.
@@ -203,4 +234,9 @@ void setup() {
 
 void loop() {
     os_runloop_once();
+}
+
+uint8_t roundup(double num) {
+    if(num >= 0.5) return (uint8_t)num + 1u;
+    return (uint8_t)num;
 }
