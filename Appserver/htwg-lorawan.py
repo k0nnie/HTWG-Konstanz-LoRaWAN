@@ -35,51 +35,35 @@ PAYLOAD_RAW=5
 META_DATA=6
 
 
-#transforms the time string from our uplink message to datetime
-def timeToDatetime(time):
-    tmp = str(time).replace(":" , "-").replace("T" , "-").replace("." , "-")
-    tmp = tmp.split("-")
-    result = datetime.datetime(int(tmp[0]),int(tmp[1]), int(tmp[2]), int(tmp[3]), int(tmp[4]), int(tmp[5])) #ignoring microseconds to evade possible crashes
-    return result
-
-#loads data from nodedata file if time and device requirements are met.
-def getData(time, device):
-    fullData = []
-    resultData = []
-    with open ('nodedata', 'r') as f:
-        fullData = f.readlines()
-        for line in fullData:
-            lineTime = line.split(',')
-            lineTime = lineTime[-1]
-            lineTime = timeToDatetime(lineTime)
-            if (datetime.datetime.now() - lineTime) <= time:
-                if line.startswith(str(device)):
-                    resultData.append(line)
-    return resultData
-
-#allows to filter data to match multiple devices and one timedelta
-def filterData(time, devices): #all data with filterData(ALLTIME, ALLDEVICES) but better (ALLTIME, MICDEVICES) + (ALLTIME, DISTANCEDEVICES)
-    data = []
-    for device in devices:
-        data.append(getData(time, device))
-    return data
+def readCurData():
+    with open ('currentData', 'r') as f:
+        lines = f.readlines()
+        deviceandmessage = {}
+        for line in lines:
+            line = line.split(",")
+            #if message isnt older than 5minutes?
+#            print(str(line[PAYLOAD_RAW])[14:-1])
+            payload = str(line[PAYLOAD_RAW])[14:-1]
+#            print("raw trimmed: " + payload)
+#            print("decoded: " + payloadConverter(payload))
+            device = str(line[DEV_ID])[9:-1]
+            deviceandmessage[device] = payloadConverter(payload)
+        for entry in deviceandmessage:
+            print(entry + " " + deviceandmessage[entry])
 
 def transformMicData():
     pass
 
-def transformDistanceData(data):
-    payloadConverter(value)
 
-def payloadConverter(msg):
-    tmp  = str(msg).split(",")
-    payload = tmp[PAYLOAD_RAW]
-    print(payload)
+def payloadConverter(payload):
     decoded = base64.b64decode(payload) #now in hex representation
-    decodedhex = ""
-    for c in decoded:
-        print(str(hex(c))[2:])
-        decodedhex = decodedhex + str(hex(c))[2:]
-    print(decodedhex)
+    decodedhex = decoded.hex()
+    return decodedhex
+
+def transformDistanceData(data):
+    for value in data:
+        payload = payloadConverter(value)
+
 
 def evaluateData(tMicData, tdistanceData):
     pass
@@ -88,9 +72,7 @@ def sendData(resultData):
   pass #change time to gmt+1
 
 def main():
-
-    x = getData(LASTWEEK, "test_distance_0")
-    transformDistanceData(x)
+    readCurData()
 
 if __name__ == "__main__":
   main()
