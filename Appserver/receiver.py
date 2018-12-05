@@ -8,8 +8,8 @@ def uplink_callback(msg, client):
   print("Received uplink from ", msg.dev_id)
   print(msg)
   with open ("nodedata", "a") as f:
-    f.write(str(msg[1]) + ", " + str(msg[5]) +", " + str(msg[6][0]) + "\n")
-
+    #f.write(str(msg[1]) + ", " + str(msg[5]) +", " + str(msg[6][0]) + "\n")
+    f.write(str(msg))
 handler = ttn.HandlerClient(app_id, access_key)
 
 # using mqtt client

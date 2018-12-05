@@ -25,6 +25,16 @@ LASTDAY = datetime.timedelta(days=1)
 LASTWEEK = datetime.timedelta(weeks=1)
 ALLTIME = datetime.timedelta(days=99999) #roughly 274 years :)
 
+#index to get specifc data of uplink msg
+APP_ID=0
+DEV_ID=1
+HARDWARE_SERIAL=2
+PORT=3
+COUNTER=4
+PAYLOAD_RAW=5
+META_DATA=6
+
+
 #transforms the time string from our uplink message to datetime
 def timeToDatetime(time):
     tmp = str(time).replace(":" , "-").replace("T" , "-").replace("." , "-")
@@ -36,7 +46,7 @@ def timeToDatetime(time):
 def getData(time, device):
     fullData = []
     resultData = []
-    with open ('nodedata2', 'r') as f:
+    with open ('nodedata', 'r') as f:
         fullData = f.readlines()
         for line in fullData:
             lineTime = line.split(',')
@@ -58,16 +68,19 @@ def transformMicData():
     pass
 
 def transformDistanceData(data):
-    for value in data:
-        tmp  = str(value).split(",")
-        payload = tmp[1]
-        print(payload)
-        decoded = base64.b64decode(payload) #now in hex representation
-        decodedhex = ""
-        for c in decoded:
-            print(str(hex(c))[2:])
-            decodedhex = decodedhex + str(hex(c))[2:]
-        print(decodedhex)
+    payloadConverter(value)
+
+def payloadConverter(msg):
+    tmp  = str(msg).split(",")
+    payload = tmp[PAYLOAD_RAW]
+    print(payload)
+    decoded = base64.b64decode(payload) #now in hex representation
+    decodedhex = ""
+    for c in decoded:
+        print(str(hex(c))[2:])
+        decodedhex = decodedhex + str(hex(c))[2:]
+    print(decodedhex)
+
 def evaluateData(tMicData, tdistanceData):
     pass
 
@@ -76,7 +89,7 @@ def sendData(resultData):
 
 def main():
 
-    x = getData(LASTDAY, "test_distance_0")
+    x = getData(LASTWEEK, "test_distance_0")
     transformDistanceData(x)
 
 if __name__ == "__main__":
