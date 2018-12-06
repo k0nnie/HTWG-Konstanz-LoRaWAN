@@ -25,6 +25,8 @@ LASTDAY = datetime.timedelta(days=1)
 LASTWEEK = datetime.timedelta(weeks=1)
 ALLTIME = datetime.timedelta(days=99999) #roughly 274 years :)
 
+NODEDATA = 'nodedata'
+
 #index to get specifc data of uplink msg
 APP_ID=0
 DEV_ID=1
@@ -40,8 +42,10 @@ MIC_2 = 100
 MIC_3 = 140
 MIC_4 = 180
 
+
+
 def readCurData():
-    with open ('nodedata', 'r') as f:
+    with open (NODEDATA, 'r') as f:
         lines = f.readlines()
         deviceandmessage = {}
         for line in lines:
@@ -97,8 +101,23 @@ def payloadConverter(payload):
     decodedhex = decoded.hex()
     return decodedhex
 
-def transformDistanceData(data):
-    pass
+def transformDistanceData(dist):
+    values = []
+    print("dist: " + str(dist))
+    values = [dist[i:i+2] for i in range(0, len(dist), 2)]
+    print("values: " + str(values))
+    return values[:int(len(values)/2)], values[int(len(values)/2):]
+
+
+def evaluateDistanceData(data):
+    devices = []
+    deviceValues = {}
+    for entry in data:
+        if "dist" in entry:
+            devices.append(entry)
+    for device in devices:
+        deviceValues[device] = transformDistanceData(data[device])
+#    print(str(deviceValues))
 
 
 def evaluateData(tMicData, tdistanceData):
@@ -109,7 +128,7 @@ def sendData(resultData):
 
 def main():
     data = readCurData()
-    evaluateMicData(data)
-
+    #evaluateMicData(data)
+    evaluateDistanceData(data)
 if __name__ == "__main__":
   main()
