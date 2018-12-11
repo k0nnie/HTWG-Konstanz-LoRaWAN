@@ -42,7 +42,8 @@ MIC_2 = 100
 MIC_3 = 140
 MIC_4 = 180
 
-
+MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1 
+SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
 def readCurData():
     with open (NODEDATA, 'r') as f:
@@ -55,7 +56,6 @@ def readCurData():
             device = str(line[DEV_ID])[9:-1]
             deviceandmessage[device] = payloadConverter(payload)
         for entry in deviceandmessage:
-#            print(entry + " " + deviceandmessage[entry])
             pass
         return deviceandmessage
 
@@ -66,7 +66,7 @@ def meanMic(mic):
     for value in values:
         mean = mean + int(value, 16)
     mean = mean / len(values)
-    print(mean)
+    print("Mic mean: " + str(mean))
     return mean
 
 def volume(mean):
@@ -101,13 +101,51 @@ def payloadConverter(payload):
     decodedhex = decoded.hex()
     return decodedhex
 
+def calculateDistance(value):
+    result = 0
+    if value <= MIN_DISTANCE_TRIGGER:
+        result = 1
+    return result
+
 def transformDistanceData(dist):
     values = []
-    print("dist: " + str(dist))
-    values = [dist[i:i+2] for i in range(0, len(dist), 2)]
-    print("values: " + str(values))
-    return values[:int(len(values)/2)], values[int(len(values)/2):]
+    result = []
+    values = [dist[i:i+2] for i in range(0, len(dist), 2)] #splits payload into bytes
+    for value in values:
+        value = int(value, 16)
+        value = calculateDistance(value)
+        result.append(value)
+    return result[:int(len(result)/2)], result[int(len(result)/2):] #splits list in left and right at n/2 elements
 
+def getResult(deviceValues, devices):
+    left = []
+    right = []
+    queueLeft = 0
+    queueRight = 0
+    for device in devices:
+        values = deviceValues[device]
+        tmpLeft = values[0]
+        tmpRight = values[1]
+        sumLeft = 0
+        sumRight = 0
+        for element in tmpLeft: #same amount of values in tmpLeft and tmpRight
+            sumLeft = sumLeft + element
+        for element in tmpRight:
+            sumRight = sumRight + element
+        left.append(sumLeft / len(tmpLeft))
+        right.append(sumRight / len(tmpRight))
+    print("left: " + str(left) + " right " + str(right))
+    for ele in left:
+        if ele >= SENSOR_SENSITIVITY:
+            queueLeft = queueLeft + 1
+        else:
+            break
+    for ele in right:
+        if ele >= SENSOR_SENSITIVITY:
+            queueRight = queueRight + 1
+        else:
+            break
+    return queueLeft, queueRight
 
 def evaluateDistanceData(data):
     devices = []
@@ -115,10 +153,12 @@ def evaluateDistanceData(data):
     for entry in data:
         if "dist" in entry:
             devices.append(entry)
+    devices.sort()
     for device in devices:
         deviceValues[device] = transformDistanceData(data[device])
-#    print(str(deviceValues))
-
+        #print(str(device) + str(deviceValues[device]))
+    leftqueue, rightqueue = getResult(deviceValues, devices)
+    print("queue left: " + str(leftqueue) + " queue right: " + str(rightqueue))
 
 def evaluateData(tMicData, tdistanceData):
     pass
@@ -128,7 +168,7 @@ def sendData(resultData):
 
 def main():
     data = readCurData()
-    #evaluateMicData(data)
+    evaluateMicData(data)
     evaluateDistanceData(data)
 if __name__ == "__main__":
   main()
