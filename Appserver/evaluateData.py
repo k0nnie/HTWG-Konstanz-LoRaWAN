@@ -1,4 +1,3 @@
-#!/bin/sh
 from datetime import date, tzinfo, timedelta
 import time
 import datetime
@@ -47,7 +46,7 @@ MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1
 SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
 def readCurData():
-    with open (NODEDATA, 'r') as f:
+    with open (NODEDATA, 'r+') as f:
         lines = f.readlines()
         deviceandmessage = {}
         for line in lines:
@@ -56,7 +55,6 @@ def readCurData():
             payload = str(line[PAYLOAD_RAW])[14:-1]
             device = str(line[DEV_ID])[9:-1]
             deviceandmessage[device] = payloadConverter(payload)
-   # f.close()
     return deviceandmessage
 
 def meanMic(mic):
@@ -66,7 +64,6 @@ def meanMic(mic):
     for value in values:
         mean = mean + int(value, 16)
     mean = mean / len(values)
-    print("Mic mean: " + str(mean))
     return mean
 
 def volume(mean):
@@ -93,7 +90,6 @@ def evaluateMicData(data):
         mean = mean + meanMic(data[mic])
     mean = mean / len(mics)
     result = volume(mean)
-    #print(result)
     return result
 
 def payloadConverter(payload):
@@ -156,9 +152,6 @@ def evaluateDistanceData(data):
     devices.sort()
     for device in devices:
         deviceValues[device] = transformDistanceData(data[device])
-        #print(str(device) + str(deviceValues[device]))
-   # leftqueue, rightqueue = getResult(deviceValues, devices)
-    #print("queue left: " + str(leftqueue) + " queue right: " + str(rightqueue))
     return getResult(deviceValues, devices)
 
 def evaluateData(tMicData, tdistanceData):
@@ -169,6 +162,7 @@ def sendData(resultData):
 
 def main():
     data = readCurData()
+    print(str(data))
     micData = evaluateMicData(data)
     print(micData)
     leftQueue, rightQueue = evaluateDistanceData(data)

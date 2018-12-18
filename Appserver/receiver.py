@@ -7,11 +7,11 @@ access_key = "ttn-account-v2.d7Q2pGiB97SPJFjr_WphmoaZKctmJRE93MhC6T9rP-g"
 
 def uplink_callback(msg, client):
   print("Received uplink from ", msg.dev_id)
-  print(msg)
-  with open ("nodedata", "a") as f:
+ # print(msg)
+  with open ("nodedata", "a+") as f:
     #f.write(str(msg[1]) + ", " + str(msg[5]) +", " + str(msg[6][0]) + "\n")
     f.write(str(msg) + "\n")
-    evaluateData.main()
+  evaluateData.main()
 handler = ttn.HandlerClient(app_id, access_key)
 
 # using mqtt client
