@@ -26,6 +26,7 @@ LASTWEEK = datetime.timedelta(weeks=1)
 ALLTIME = datetime.timedelta(days=99999) #roughly 274 years :)
 
 NODEDATA = 'nodedata'
+CURRENTDATA = 'currentdata'
 
 #index to get specifc data of uplink msg
 APP_ID=0
@@ -55,9 +56,8 @@ def readCurData():
             payload = str(line[PAYLOAD_RAW])[14:-1]
             device = str(line[DEV_ID])[9:-1]
             deviceandmessage[device] = payloadConverter(payload)
-        for entry in deviceandmessage:
-            pass
-        return deviceandmessage
+   # f.close()
+    return deviceandmessage
 
 def meanMic(mic):
     values = []
@@ -93,7 +93,7 @@ def evaluateMicData(data):
         mean = mean + meanMic(data[mic])
     mean = mean / len(mics)
     result = volume(mean)
-    print(result)
+    #print(result)
     return result
 
 def payloadConverter(payload):
@@ -157,8 +157,9 @@ def evaluateDistanceData(data):
     for device in devices:
         deviceValues[device] = transformDistanceData(data[device])
         #print(str(device) + str(deviceValues[device]))
-    leftqueue, rightqueue = getResult(deviceValues, devices)
-    print("queue left: " + str(leftqueue) + " queue right: " + str(rightqueue))
+   # leftqueue, rightqueue = getResult(deviceValues, devices)
+    #print("queue left: " + str(leftqueue) + " queue right: " + str(rightqueue))
+    return getResult(deviceValues, devices)
 
 def evaluateData(tMicData, tdistanceData):
     pass
@@ -168,7 +169,13 @@ def sendData(resultData):
 
 def main():
     data = readCurData()
-    evaluateMicData(data)
-    evaluateDistanceData(data)
+    micData = evaluateMicData(data)
+    print(micData)
+    leftQueue, rightQueue = evaluateDistanceData(data)
+    print("ql: " + str(leftQueue) + " rq: " + str(rightQueue))
+    os.remove(CURRENTDATA)
+    with open(CURRENTDATA, "w+") as f:
+        f.write("MicData: " + str(micData) + "\n")
+        f.write("Left Queue: " + str(leftQueue) + ", Right Queue: " + str(rightQueue) + "\n")
 if __name__ == "__main__":
   main()

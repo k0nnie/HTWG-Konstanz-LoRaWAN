@@ -4,6 +4,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 HOST_NAME = '192.52.33.75'
 PORT_NUMBER = 8080
 
+CURRENTDATA = "../Appserver/currentdata"
+
 class MyHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.send_response(200)
@@ -12,32 +14,34 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         paths = {
-            '/foo': {'status': 200},
-            '/bar': {'status': 302},
-            '/baz': {'status': 404},
-            '/qux': {'status': 500}
+            '/current': {'status': 200},
+           # '/bar': {'status': 302},
+           # '/baz': {'status': 404},
+           # '/qux': {'status': 500}
         }
 
         if self.path in paths:
-            self.respond(paths[self.path])
+            #self.respond(paths[self.path])
+            self.handle_http(paths[self.path]['status'], self.path)
         else:
-            self.respond({'status': 500})
+ #           self.respond({'status': 500})
+            pass
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        content = '''
-        <html><head><title>Title goes here.</title></head>
-        <body><p>This is a test.</p>
-        <p>You accessed path: {}</p>
-        </body></html>
-        '''.format(path)
-        return bytes(content, 'UTF-8')
+        data = ""
+        with open(CURRENTDATA, "r") as f:
+            data = f.read()
 
-    def respond(self, opts):
-        response = self.handle_http(opts['status'], self.path)
-        self.wfile.write(response)
+        content = '''
+        <html><head><title>HTWG LoraWAN</title></head>
+        <body>
+        <p>Current Data: {}</p>
+        </body></html>
+        '''.format(data)
+        self.wfile.write(bytes(content, 'UTF-8'))
 
 if __name__ == '__main__':
     server_class = HTTPServer
