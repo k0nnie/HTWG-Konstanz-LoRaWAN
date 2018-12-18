@@ -1,5 +1,6 @@
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
 
 HOST_NAME = '192.52.33.75'
 PORT_NUMBER = 8080
@@ -13,6 +14,17 @@ class MyHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+#        key = self.server.get_auth_key()
+        if self.headers.get('Authorization') == None:
+            self.do_AUTHHEAD()
+
+            response = {
+                'success': False,
+                'error': 'No auth header received'
+            }
+            self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+
+
         paths = {
             '/current': {'status': 200},
            # '/bar': {'status': 302},
@@ -26,6 +38,12 @@ class MyHandler(BaseHTTPRequestHandler):
         else:
  #           self.respond({'status': 500})
             pass
+
+    def do_AUTHHEAD(self):
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm="test test"')
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
