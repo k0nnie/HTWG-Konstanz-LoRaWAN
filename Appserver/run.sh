@@ -16,3 +16,6 @@ if [ $1 == "stoprec" ]
      then
 	end_rec
 fi
+
+#setsid python3 receiver.py >log123 2>&1 < /dev/null & start program via setsid 
+#in detatched environment

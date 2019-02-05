@@ -15,14 +15,14 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 #        key = self.server.get_auth_key()
-        if self.headers.get('Authorization') == None:
-            self.do_AUTHHEAD()
+#        if self.headers.get('Authorization') == None:
+#            self.do_AUTHHEAD()
 
-            response = {
-                'success': False,
-                'error': 'No auth header received'
-            }
-            self.wfile.write(bytes(json.dumps(response), 'utf-8'))
+          #  response = {
+          #      'success': False,
+          #      'error': 'No auth header received'
+          #  }
+          #  self.wfile.write(bytes(json.dumps(response), 'utf-8'))
 
 
         paths = {
@@ -51,15 +51,12 @@ class MyHandler(BaseHTTPRequestHandler):
         self.end_headers()
         data = ""
         with open(CURRENTDATA, "r") as f:
-            data = f.read()
+            nodeData = f.read()
+        with open("main.html", "r") as f:
+            main = f.read()
 
-        content = '''
-        <html><head><title>HTWG LoraWAN</title></head>
-        <body>
-        <p>Current Data: {}</p>
-        </body></html>
-        '''.format(data)
-        self.wfile.write(bytes(content, 'UTF-8'))
+        message = main.format(DATA=nodeData)
+        self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':
     server_class = HTTPServer

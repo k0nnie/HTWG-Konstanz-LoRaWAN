@@ -1,0 +1,24 @@
+@media (min-width: 1000px) {
+    .pagecontainer {
+        width: 30em;
+        margin: auto;
+        margin-top: 1em;
+        display: block;
+    }
+
+    .gamecontainer {
+        height: 500px;
+        width: 500px;
+        display: inline-flex;
+        margin: 0em;
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+        font-size:60px;
+        line-height: 66px;
+        font-family: "Verdana",Geneva, sans-serif;
+        font-weight: bold;
+        color:black;
+        float: center;
+    }
+}
+
