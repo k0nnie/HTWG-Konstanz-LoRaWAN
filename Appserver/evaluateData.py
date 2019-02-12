@@ -26,6 +26,7 @@ ALLTIME = datetime.timedelta(days=99999) #roughly 274 years :)
 
 NODEDATA = 'nodedata'
 CURRENTDATA = 'currentdata'
+LASTDATA = 'lastData'
 
 #index to get specifc data of uplink msg
 APP_ID=0
@@ -56,6 +57,13 @@ def readCurData():
             device = str(line[DEV_ID])[9:-1]
             deviceandmessage[device] = payloadConverter(payload)
     return deviceandmessage
+
+def readLastData():
+    with open (LASTDATA, 'r+') as f:
+        line = f.read()
+        line = line.replace("]", "")
+        line = line.replace("[", "")
+    return list(map(int, str(line)))
 
 def meanMic(mic):
     values = []
@@ -143,7 +151,7 @@ def getResult(deviceValues, devices):
             break
     return queueLeft, queueRight
 
-def evaluateDistanceData(data):
+def evaluateDistanceData(data, lastData):
     devices = []
     deviceValues = {}
     for entry in data:
@@ -152,6 +160,11 @@ def evaluateDistanceData(data):
     devices.sort()
     for device in devices:
         deviceValues[device] = transformDistanceData(data[device])
+    #save current data for next step
+    with open (LASTDATA, "w+") as f:
+        for key in deviceValues:
+            f.write(str(deviceValues[key][0]))
+            f.write(str(deviceValues[key][1]))
     return getResult(deviceValues, devices)
 
 def evaluateData(tMicData, tdistanceData):
@@ -162,14 +175,20 @@ def sendData(resultData):
 
 def main():
     data = readCurData()
+    lastData = readLastData()
     print(str(data))
+    print(str(lastData))
     micData = evaluateMicData(data)
     print(micData)
-    leftQueue, rightQueue = evaluateDistanceData(data)
+    leftQueue, rightQueue = evaluateDistanceData(data, lastData)
     print("ql: " + str(leftQueue) + " rq: " + str(rightQueue))
+    result = round(((micData * 20) + (leftQueue * 20) + (rightQueue * 20)) / 3, 2)
+    print(result)
     os.remove(CURRENTDATA)
+    #with open(CURRENTDATA, "w+") as f:
+    #    f.write("MicData: " + str(micData) + "\n")
+     #   f.write("Left Queue: " + str(leftQueue) + ", Right Queue: " + str(rightQueue) + "\n")
     with open(CURRENTDATA, "w+") as f:
-        f.write("MicData: " + str(micData) + "\n")
-        f.write("Left Queue: " + str(leftQueue) + ", Right Queue: " + str(rightQueue) + "\n")
+        f.write(str(result))
 if __name__ == "__main__":
   main()

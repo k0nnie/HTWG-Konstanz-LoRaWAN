@@ -55,7 +55,8 @@ class MyHandler(BaseHTTPRequestHandler):
         with open("main.html", "r") as f:
             main = f.read()
 
-        message = main.format(DATA=nodeData)
+       # message = main.format(DATA=nodeData)
+        message = main.format(Percentage=nodeData)
         self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':
