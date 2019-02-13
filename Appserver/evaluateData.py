@@ -6,23 +6,8 @@ import urllib.request
 import os
 import subprocess
 import sys
-#import thread
 import base64
 import codecs
-
-MICDEVICES = ["test_mic_0", "test_mic_1"]
-DISTANCEDEVICES = ["test_distance_0", "test_distance_1"]
-#WLANDEVICE = []
-ALLDEVICES = MICDEVICES + DISTANCEDEVICES
-
-#timedeltas to request the latest data
-LAST30SECONDS = datetime.timedelta(seconds=30)
-LAST5MINUTES = datetime.timedelta(minutes=5)
-LASTHOUR = datetime.timedelta(hours=1)
-LAST2HOURS = datetime.timedelta(hours=2)
-LASTDAY = datetime.timedelta(days=1)
-LASTWEEK = datetime.timedelta(weeks=1)
-ALLTIME = datetime.timedelta(days=99999) #roughly 274 years :)
 
 NODEDATA = 'nodedata'
 CURRENTDATA = 'currentdata'
@@ -46,6 +31,7 @@ MIC_4 = 180
 MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1 
 SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
+#gewichtung fuer endgueltige berechnung
 WEIGHT_DISTANCE_LEFT = 3
 WEIGHT_DISTANCE_RIGHT = 3
 WEIGHT_MIC_DATA = 1
@@ -76,9 +62,7 @@ def readLastData():
     lastDataRight = lastDataRight.replace(" ", "")
     lastDataRight = lastDataRight.split(",")
     return lastDataLeft, lastDataRight
-       # line = line.replace("]", "")
-        #line = line.replace("[", "")
-    #return list(map(int, str(line)))
+
 
 def meanMic(mic):
     values = []
@@ -137,7 +121,6 @@ def transformDistanceData(dist):
     return result[:int(len(result)/2)], result[int(len(result)/2):] #splits list in left and right at n/2 elements
 
 def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
-    print("test")
     left = []
     right = []
     #laenge der wirklichen queue
@@ -153,6 +136,8 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
     countLastQueueLeft = 0
     countLastQueueRight = 0
     foundZero = False
+
+    #average for every device (left and right), can be multiple values per message
     for device in devices:
         values = deviceValues[device]
         tmpLeft = values[0]
@@ -165,10 +150,13 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
             sumRight = sumRight + element
         left.append(sumLeft / len(tmpLeft))
         right.append(sumRight / len(tmpRight))
-    print("left: " + str(left) + " right " + str(right))
+
+    #writes current data in file lastdata for next step
     with open (LASTDATA, "w+") as f:
         f.write(str(left) + "\n")
         f.write(str(right))
+
+    #calculates actual queue and count of 1 in current Left
     for ele in left:
         if ele >= SENSOR_SENSITIVITY:
             countQueueLeft = countQueueLeft + 1
@@ -176,6 +164,8 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
                 queueLeft = queueLeft + 1
         else:
             foundZero = True
+
+    #calculates actual queue and count of 1 in current Right
     foundZero = False
     for ele in right:
         if ele >= SENSOR_SENSITIVITY:
@@ -184,8 +174,8 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
                 queueRight = queueRight + 1
         else:
             foundZero = True
-    
 
+    #calculates actual queue and count of 1 in last Left
     foundZero = False
     for ele in lastDataLeft:
         if float(ele) >= SENSOR_SENSITIVITY:
@@ -194,6 +184,8 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
                 countLastQueueLeft = countLastQueueLeft + 1
         else:
             foundZero = True
+
+    #calculates actual queue and count of 1 in last Right
     foundZero = False
     for ele in lastDataRight:
         if float(ele) >= SENSOR_SENSITIVITY:
@@ -205,6 +197,7 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
 
     #pruefen, ob eine Luecke von genau 1 (nicht am Ende) entstanden ist, dann alte Laenge der queue behalten
     #aendert nur den queue wert, nicht die last data fuer naechsten aufruf
+    #left queue
     countRestQueue = 0
     if((lastQueueLeft - countQueueLeft) == 1):
         if((len(left)) >= countLastQueueLeft):
@@ -217,7 +210,19 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
                 if(left[countLastQueueLeft - 1] >= SENSOR_SENSITIVITY):
                     queueLeft = countLastQueueLeft
 
-    print("Queue Left: " + str(queueLeft))
+    #right queue
+    countRestQueue = 0
+    if((lastQueueRight - countQueueRight) == 1):
+        if((len(right)) >= countLastQueueRight):
+            for element in left[countLastQueueRight:]:
+                if(element < SENSOR_SENSITIVITY):
+                    countRestQueue = countRestQueue + 1
+                else:
+                     countRestQueue = 0
+            if(countRestQueue < 2):
+                if(right[countLastQueueRight - 1] >= SENSOR_SENSITIVITY):
+                    queueRight = countLastQueueRight
+
     return queueLeft, queueRight
 
 def evaluateDistanceData(data, lastDataLeft, lastDataRight):
@@ -229,40 +234,22 @@ def evaluateDistanceData(data, lastDataLeft, lastDataRight):
     devices.sort()
     for device in devices:
         deviceValues[device] = transformDistanceData(data[device])
-    #save current data for next step
-    #with open (LASTDATA, "w+") as f:
-    #    for key in deviceValues:
-    #        f.write(str(deviceValues[key][0]))
-    #        f.write(str(deviceValues[key][1]))
     return getResult(deviceValues, devices, lastDataLeft, lastDataRight)
 
 def evaluateData(micData, leftQueue, rightQueue):
     result = round(((leftQueue * WEIGHT_DISTANCE_LEFT + rightQueue * WEIGHT_DISTANCE_RIGHT + micData * WEIGHT_MIC_DATA) / (WEIGHT_DISTANCE_LEFT + WEIGHT_DISTANCE_RIGHT + WEIGHT_MIC_DATA)) * 20, 2)
     return result
 
-def sendData(resultData):
-  pass #change time to gmt+1
 
 def main():
-    print("test main")
     data = readCurData()
     lastDataLeft, lastDataRight = readLastData()
-    print("read")
-    print(str(data))
-    print(str(lastDataLeft) + str(lastDataRight))
     micData = evaluateMicData(data)
-    print(micData)
     leftQueue, rightQueue = evaluateDistanceData(data, lastDataLeft, lastDataRight)
-    print("ql: " + str(leftQueue) + " rq: " + str(rightQueue))
-   # result = round(((micData * 20) + (leftQueue * 20) + (rightQueue * 20)) / 3, 2)
-    #print(result)
     result = evaluateData(micData, leftQueue, rightQueue)
-    print(str(result))
     os.remove(CURRENTDATA)
-    #with open(CURRENTDATA, "w+") as f:
-    #    f.write("MicData: " + str(micData) + "\n")
-     #   f.write("Left Queue: " + str(leftQueue) + ", Right Queue: " + str(rightQueue) + "\n")
     with open(CURRENTDATA, "w+") as f:
         f.write(str(result))
+
 if __name__ == "__main__":
   main()
