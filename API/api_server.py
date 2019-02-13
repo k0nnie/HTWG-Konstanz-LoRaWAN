@@ -14,36 +14,14 @@ class MyHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-#        key = self.server.get_auth_key()
-#        if self.headers.get('Authorization') == None:
-#            self.do_AUTHHEAD()
-
-          #  response = {
-          #      'success': False,
-          #      'error': 'No auth header received'
-          #  }
-          #  self.wfile.write(bytes(json.dumps(response), 'utf-8'))
-
-
         paths = {
             '/current': {'status': 200},
-           # '/bar': {'status': 302},
-           # '/baz': {'status': 404},
-           # '/qux': {'status': 500}
         }
 
         if self.path in paths:
-            #self.respond(paths[self.path])
             self.handle_http(paths[self.path]['status'], self.path)
         else:
- #           self.respond({'status': 500})
             pass
-
-    def do_AUTHHEAD(self):
-        self.send_response(401)
-        self.send_header('WWW-Authenticate', 'Basic realm="test test"')
-        self.send_header('Content-type', 'application/json')
-        self.end_headers()
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
@@ -55,7 +33,6 @@ class MyHandler(BaseHTTPRequestHandler):
         with open("main.html", "r") as f:
             main = f.read()
 
-       # message = main.format(DATA=nodeData)
         message = main.format(Percentage=nodeData)
         self.wfile.write(bytes(message, 'UTF-8'))
 
