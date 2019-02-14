@@ -1,7 +1,8 @@
 import requests
+import time
 
 req_header = {
-"authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YmU5N2Q1MDVkMzU2ODAwM2IwMjNkM2QiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTU1MDA3MjU4MSwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJ0dG4tY29uc29sZSIsInNjb3BlIjpbImFwcHMiLCJnYXRld2F5cyIsInByb2ZpbGUiLCJjbGllbnRzIl0sImludGVyY2hhbmdlYWJsZSI6dHJ1ZSwidXNlcm5hbWUiOiJIVFdHLUtvbnN0YW56LUxvUmFXQU4iLCJlbWFpbCI6Im1heHJvdGhAaHR3Zy1rb25zdGFuei5kZSIsImNyZWF0ZWQiOiIyMDE4LTExLTEyVDEzOjE3OjA0Ljk0MFoiLCJ2YWxpZCI6dHJ1ZSwiX2lkIjoiNWJlOTdkNTA1ZDM1NjgwMDNiMDIzZDNkIiwiZXhwIjoxNTUwMDc2MjQxfQ.TLD350322mKWaBfnmEN1hRJvvcZSJxiPdG9jU9yrY6spdELw2P7U5vZOLn_QK50jiKV4X_zx3bDg6NQujGq0tItfIM4EhS3tBP8obgLLkPZl0Z8b-pHOEvxQvYhL-nYD5V-6Nh89lV3JmklF7h7RNoBXeZvUIxjEFaUBmoVdFPS1EfMHgMfDBob1EJKZrSxZA4gVmPf2HkQ232LcQZnDEiQEueAXrGie6JKpYUUnCgpTgniAaMhx0lpoQZraC5d62wF0blsTpzSo6Qv7q8dnAJIXuquZL1J8jvxm2oUnfQ1zEq6YbU7Xizm6hw2631QcgkEbJcXMI3ZLPbIsyNDaZIsvBxxLtlWsykBE9Vm6mhHF5OZSgyaSIQB7A9rd9fZqv3jFOz-vGeXL3tUaw26eH_HtiogTnVP1lToqUnsNYnGTxVOEBHxBkYfUO3Gx8Oed2aioY3CH_fcAWsx80dDqGz2ZnGxbsyjndcVdFnnOvK7sFDEUofuGsmhSJ9bqZ9kTW4kzOq_8fRW_8wXHx-bLRlnnwlKqVbyn5qSNtFPmKsZbpntH7HC3VunLtH7f_FhSZjWaJzK5RdaddssATgEJ1IZFR0TBZXh3cKzIP2J_uAy4GcOPSkTVrV1lsWSymaVcmDdy0nTvRzjuAN5TFtTTFdqyR_BT0k7xxoTz_XFTH7k"
+"authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI1YmU5N2Q1MDVkMzU2ODAwM2IwMjNkM2QiLCJpc3MiOiJ0dG4tYWNjb3VudC12MiIsImlhdCI6MTU1MDE0NTk0NCwidHlwZSI6InVzZXIiLCJjbGllbnQiOiJ0dG4tY29uc29sZSIsInNjb3BlIjpbImFwcHMiLCJnYXRld2F5cyIsInByb2ZpbGUiLCJjbGllbnRzIl0sImludGVyY2hhbmdlYWJsZSI6dHJ1ZSwidXNlcm5hbWUiOiJIVFdHLUtvbnN0YW56LUxvUmFXQU4iLCJlbWFpbCI6Im1heHJvdGhAaHR3Zy1rb25zdGFuei5kZSIsImNyZWF0ZWQiOiIyMDE4LTExLTEyVDEzOjE3OjA0Ljk0MFoiLCJ2YWxpZCI6dHJ1ZSwiX2lkIjoiNWJlOTdkNTA1ZDM1NjgwMDNiMDIzZDNkIiwiZXhwIjoxNTUwMTQ5NjA0fQ.i4lNY2-JHpbRQG1QbBzz4t2r8kMRr3e3uz7BU0VTqrkqDnyCTssCCibxllKf6loRcq3iS5oPXe0PvRzvfvZ5Wl58PpqEB518AA5VMMeqlMrDMl5tLP8jg8kJGlyEk_upkGQHRSP8MXjWm-erNoQEC0Wnz0l1y1JF_VEfdLGrYwZZc7RDCgqXnPcGu8OrnJ5ls6cmF16kUhiEvpZu9Wl7dNwpG6wtUP0lizNcGQ-abVdK0SNLcgZfeGR0AvFqXhDc1OrXzbVKElvcqPrBAaVse2fNsSKjRieOJUZczP3PWQ-Uui9cNXlxb9FKWgse_0ZpTCoAR_fIBKbLsWO3HV65Lm4iSCDbBkPwH4kzw2yzAVG3dzdBN0Jg6gtJ5v75OTPbYHalqcIlp_y0yIH2qxPunhJ1RdA167roGVtWYAj1IHNQ-xEzx0_R8TzdY735QCS99GSDvXUr2M7-z89GWYanxT6nWluNj-bqcD-3FNblUyjEEpKPNBtGQEOF9aSlsqMrBOXaWrHsmYzFZ7YOr5lQp4bxnsF7Ld0SEB88W9yvCuFZ7WmQVSA7z9wuui7kZ1XnCDw0w1xwtBqCTQ8m6xCO5ejfOkNUx_9oh1VJ8fx-7j_XkAQxgu3wO8cIJNNoTJXq37SEzv2-IciRIxRYrzYP5hUR8lNMBbxm3TgaJFqKLvI"
 }
 
 login = {"username":"HTWG-Konstanz-LoRaWAN","password":"X4>8g6m?"}
@@ -20,21 +21,39 @@ response_login = s.post("https://account.thethingsnetwork.org/api/v2/users/login
 
 print(str(response_login.headers))
 
-req_body = {"fport":1,"payload":"FFFF"}
+body_distance = {"fport":1,"payload":"FFFF"}
+body_mic = {"fport":1,"payload":"00"}
 
-req_body["payload"] = "FFFF"
+#reset all sensors to simulate empty queue and room
+for distance in range(len(distance_addresses)):
+        response = s.post(distance_addresses[distance], json= body_distance, headers=req_header)
+        print(str(response))
+for mic in range(len(mic_addresses)):
+        response = s.post(mic_addresses[mic], json= body_mic, headers=req_header)
+
 
 payload_int_left = 255
 payload_int_right = 255
-for x in range(10):
-    payload_int_left = payload_int_left - 20
-    payload_int_right = payload_int_right - 20
-    req_body["payload"] = str(hex(payload_int_left)[2:]) + str(hex(payload_int_right)[2:])
-    print(req_body["payload"])
-    for y in range(5):
-        response = s.post(distance_addresses[y], json= req_body, headers=req_header)
+payload_mic = 0
+for x in range(len(distance_addresses)):
+    payload_int_left = 255
+    payload_int_right = 255
+    payload_mic = payload_mic + 50
+    body_mic["payload"] = str(hex(payload_mic)[2:])
+    for mic in range(len(mic_addresses)):
+        response = s.post(mic_addresses[mic], json= body_mic, headers=req_header)
+    for y in range(10):
+        payload_int_left = payload_int_left - 20
+        payload_int_right = payload_int_right - 20
+        body_distance["payload"] = str(hex(payload_int_left)[2:]) + str(hex(payload_int_right)[2:])
+        print(body_distance["payload"])
+        time.sleep(.3)
+        response = s.post(distance_addresses[x], json= body_distance, headers=req_header)
         print(str(response))
-        
-response = s.post(mic_addresses[0], json= req_body, headers=req_header)
-response = s.post(mic_addresses[1], json= req_body, headers=req_header)
+body_distance["payload"] = "FF00"
+response = s.post(distance_addresses[4], json= body_distance, headers=req_header)
+time.sleep(3)
+body_distance["payload"] = "00FF"
+response = s.post(distance_addresses[3], json= body_distance, headers=req_header)
+    
 print(str(response))
