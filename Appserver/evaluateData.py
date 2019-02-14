@@ -13,6 +13,10 @@ NODEDATA = 'nodedata'
 CURRENTDATA = 'currentdata'
 LASTDATA = 'lastData'
 DEBUGDATA = 'debugData'
+PLOTRESULT = 'plotResult'
+PLOTRESULTQUEUELEFT = 'plotResultQueueLeft'
+PLOTRESULTQUEUERIGHT = 'plotResultQueueRight'
+PLOTRESULTMIC = 'plotResultMic'
 
 #index to get specifc data of uplink msg
 APP_ID=0
@@ -29,7 +33,7 @@ MIC_2 = 100
 MIC_3 = 140
 MIC_4 = 180
 
-MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1 
+MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1
 SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
 #gewichtung fuer endgueltige berechnung
@@ -240,8 +244,18 @@ def evaluateDistanceData(data, lastDataLeft, lastDataRight):
     return getResult(deviceValues, devices, lastDataLeft, lastDataRight)
 
 def evaluateData(micData, leftQueue, rightQueue):
+    resultLeftQueue = leftQueue * 20
+    resultRightQueue = rightQueue * 20
+    resultMic = micData * 20
     result = round(((leftQueue * WEIGHT_DISTANCE_LEFT + rightQueue * WEIGHT_DISTANCE_RIGHT + micData * WEIGHT_MIC_DATA) / (WEIGHT_DISTANCE_LEFT + WEIGHT_DISTANCE_RIGHT + WEIGHT_MIC_DATA)) * 20, 2)
-    return result
+    os.remove(CURRENTDATA)
+    with open(CURRENTDATA, "w+") as f:
+        f.write(str(result)+"\n")
+        f.write(str(resultLeftQueue)+"\n")
+        f.write(str(resultRightQueue)+"\n")
+        f.write(str(resultMic))
+    with open(PLOTRESULT, "a+") as f:
+        f.write(str(result)+"\n")
 
 def writeDebugData(leftQueue, rightQueue):
     with open(DEBUGDATA, "w+") as f:
@@ -253,10 +267,7 @@ def main():
     lastDataLeft, lastDataRight = readLastData()
     micData = evaluateMicData(data)
     leftQueue, rightQueue = evaluateDistanceData(data, lastDataLeft, lastDataRight)
-    result = evaluateData(micData, leftQueue, rightQueue)
-    os.remove(CURRENTDATA)
-    with open(CURRENTDATA, "w+") as f:
-        f.write(str(result))
+    evaluateData(micData, leftQueue, rightQueue)
 
 if __name__ == "__main__":
   main()

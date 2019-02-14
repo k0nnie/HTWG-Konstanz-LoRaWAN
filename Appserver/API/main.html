@@ -4,7 +4,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="main.css"/>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-    <script src="main.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
         <header class="navbar navbar-inverse navbar-fixed-top" role="navigation">
@@ -34,11 +34,39 @@
             <div class="gamecontainer">
                 <div class="game"
                 </br></br></br></br></br>
-                
+                Gesamt:</br>
                 <div class="w3-light-grey">
                     <div class="w3-container w3-red w3-center" style="width:{Percentage}%">{Percentage}%</div>
                 </div>
-                {DEBUG}
+                </br>Warteschlange links:</br>
+                <div class="w3-light-grey">
+                    <div class="w3-container w3-red w3-center" style="width:{PercentageQueueLeft}%">{PercentageQueueLeft}%</div>
+                </div>
+                </br>Warteschlange rechts:</br>
+                <div class="w3-light-grey">
+                    <div class="w3-container w3-red w3-center" style="width:{PercentageQueueRight}%">{PercentageQueueRight}%</div>
+                </div>
+                </br>Mikrofon:</br>
+                <div class="w3-light-grey">
+                    <div class="w3-container w3-red w3-center" style="width:{PercentageMic}%">{PercentageMic}%</div>
+                </div>
+                <div id="myDiv"></div>
+                <script>
+                    var trace1 = {{
+                        x: [{Count}],
+                        y: [{Values}],
+                        mode: 'lines+markers'
+                    }};
+
+                    var data = [trace1];
+
+                    var layout = {{
+                        title:'Verlauf Gesamt'
+                    }};
+
+                    Plotly.newPlot('myDiv', data, layout);              
+                </script>
+               <!-- <script src="tester.js"></script>-->
             </div>
         </main>
 </body>
