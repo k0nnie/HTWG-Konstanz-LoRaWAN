@@ -12,6 +12,7 @@ import codecs
 NODEDATA = 'nodedata'
 CURRENTDATA = 'currentdata'
 LASTDATA = 'lastData'
+DEBUGDATA = 'debugData'
 
 #index to get specifc data of uplink msg
 APP_ID=0
@@ -156,6 +157,8 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
         f.write(str(left) + "\n")
         f.write(str(right))
 
+    writeDebugData(left, right)
+
     #calculates actual queue and count of 1 in current Left
     for ele in left:
         if ele >= SENSOR_SENSITIVITY:
@@ -240,6 +243,10 @@ def evaluateData(micData, leftQueue, rightQueue):
     result = round(((leftQueue * WEIGHT_DISTANCE_LEFT + rightQueue * WEIGHT_DISTANCE_RIGHT + micData * WEIGHT_MIC_DATA) / (WEIGHT_DISTANCE_LEFT + WEIGHT_DISTANCE_RIGHT + WEIGHT_MIC_DATA)) * 20, 2)
     return result
 
+def writeDebugData(leftQueue, rightQueue):
+    with open(DEBUGDATA, "w+") as f:
+        f.write("Left Queue: " + str(leftQueue))
+        f.write("Right Queue: " + str(rightQueue))
 
 def main():
     data = readCurData()

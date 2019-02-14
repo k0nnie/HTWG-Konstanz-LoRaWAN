@@ -5,7 +5,8 @@ import json
 HOST_NAME = '192.52.33.75'
 PORT_NUMBER = 8080
 
-CURRENTDATA = "../Appserver/currentdata"
+CURRENTDATA = "../currentdata"
+DEBUGDATA = "../debugData"
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -30,10 +31,13 @@ class MyHandler(BaseHTTPRequestHandler):
         data = ""
         with open(CURRENTDATA, "r") as f:
             nodeData = f.read()
+        with open(DEBUGDATA, "r") as f:
+            debugData = f.read()
         with open("main.html", "r") as f:
             main = f.read()
 
-        message = main.format(Percentage=nodeData)
+        message = main.format(Percentage=nodeData, DEBUG=debugData)
+        #message = main.format(DEBUG = debugData)
         self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':
