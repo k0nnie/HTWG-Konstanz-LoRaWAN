@@ -22,6 +22,7 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         paths = {
             '/current': {'status': 200},
+            '/dev':{ 'status': 200},
         }
 
         if self.path in paths:
@@ -51,29 +52,39 @@ class MyHandler(BaseHTTPRequestHandler):
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
-        data = ""
-        with open(CURRENTDATA, "r") as f:
-            nodeData = f.readlines()
-        with open(DEBUGDATA, "r") as f:
-            debugData = f.read()
-        with open("main.html", "r") as f:
-            main = f.read()
-        with open(PLOTRESULT, "r") as f:
-            plotResult = f.readlines()
-        valuesResult, countResult = self.convertResult(plotResult)
-        with open(PLOTRESULTQUEUELEFT, "r") as f:
-            plotResultQueueLeft = f.readlines()
-        valuesResultQueueLeft, countResultQueueLeft = self.convertResult(plotResultQueueLeft)
-        with open(PLOTRESULTQUEUERIGHT, "r") as f:
-            plotResultQueueRight = f.readlines()
-        valuesResultQueueRight, countResultQueueRight = self.convertResult(plotResultQueueRight)
-        with open(PLOTRESULTMIC, "r") as f:
-            plotResultMic = f.readlines()
-        valuesResultMic, countResultMic = self.convertResult(plotResultMic)
-        with open(CURRENTMOVEMENT, "r") as f:
-            movement = f.readlines()
 
-        message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
+        message = ""
+        if(str(path) == "/current"):
+            print("test")
+            data = ""
+            with open(CURRENTDATA, "r") as f:
+                nodeData = f.readlines()
+            with open(DEBUGDATA, "r") as f:
+                debugData = f.read()
+            with open("main.html", "r") as f:
+                main = f.read()
+            with open(PLOTRESULT, "r") as f:
+                plotResult = f.readlines()
+            valuesResult, countResult = self.convertResult(plotResult)
+            with open(PLOTRESULTQUEUELEFT, "r") as f:
+                plotResultQueueLeft = f.readlines()
+            valuesResultQueueLeft, countResultQueueLeft = self.convertResult(plotResultQueueLeft)
+            with open(PLOTRESULTQUEUERIGHT, "r") as f:
+                plotResultQueueRight = f.readlines()
+            valuesResultQueueRight, countResultQueueRight = self.convertResult(plotResultQueueRight)
+            with open(PLOTRESULTMIC, "r") as f:
+                plotResultMic = f.readlines()
+            valuesResultMic, countResultMic = self.convertResult(plotResultMic)
+            with open(CURRENTMOVEMENT, "r") as f:
+                movement = f.readlines()
+
+            message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
+        elif(str(path) == "/dev"):
+            with open("dev.html", "r") as f:
+                dev = f.read()
+
+            message = dev
+
         self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':
