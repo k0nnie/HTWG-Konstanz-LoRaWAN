@@ -8,6 +8,9 @@ PORT_NUMBER = 8080
 CURRENTDATA = "../currentdata"
 DEBUGDATA = "../debugData"
 PLOTRESULT = "../plotResult"
+PLOTRESULTQUEUELEFT = "../plotResultQueueLeft"
+PLOTRESULTQUEUERIGHT = "../plotResultQueueRight"
+PLOTRESULTMIC = "../plotResultMic"
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -25,6 +28,24 @@ class MyHandler(BaseHTTPRequestHandler):
         else:
             pass
 
+    def convertResult(self, result):
+        values = ""
+        for i in range(len(result)):
+            result[i] = result[i][:-1]
+            if i == 0:
+                values = str(result[0])
+            else:
+                values = values + "," + str(result[i])
+
+        count = ""
+        for i in range(len(result)):
+            if i == 0:
+                count = str(i)
+            else:
+                count = count + "," + str(i)
+
+        return values, count
+
     def handle_http(self, status_code, path):
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
@@ -38,23 +59,18 @@ class MyHandler(BaseHTTPRequestHandler):
             main = f.read()
         with open(PLOTRESULT, "r") as f:
             plotResult = f.readlines()
+        valuesResult, countResult = self.convertResult(plotResult)
+        with open(PLOTRESULTQUEUELEFT, "r") as f:
+            plotResultQueueLeft = f.readlines()
+        valuesResultQueueLeft, countResultQueueLeft = self.convertResult(plotResultQueueLeft)
+        with open(PLOTRESULTQUEUERIGHT, "r") as f:
+            plotResultQueueRight = f.readlines()
+        valuesResultQueueRight, countResultQueueRight = self.convertResult(plotResultQueueRight)
+        with open(PLOTRESULTMIC, "r") as f:
+            plotResultMic = f.readlines()
+        valuesResultMic, countResultMic = self.convertResult(plotResultMic)
 
-        values = ""
-        for i in range(len(plotResult)):
-            plotResult[i] = plotResult[i][:-1]
-            if i == 0:
-                values = str(plotResult[0])
-            else:
-                values = values + "," + str(plotResult[i])
-
-        count = ""
-        for i in range(len(plotResult)):
-            if i == 0:
-                count = str(i)
-            else:
-                count = count + "," + str(i)
-
-        message = main.format(Percentage=nodeData[0],PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=str(count), Values=str(values))
+        message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic)
         self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':

@@ -50,7 +50,7 @@
                 <div class="w3-light-grey">
                     <div class="w3-container w3-red w3-center" style="width:{PercentageMic}%">{PercentageMic}%</div>
                 </div>
-                <div id="myDiv"></div>
+                <div id="plotResult"></div>
                 <script>
                     var trace1 = {{
                         x: [{Count}],
@@ -64,7 +64,46 @@
                         title:'Verlauf Gesamt'
                     }};
 
-                    Plotly.newPlot('myDiv', data, layout);              
+                    Plotly.newPlot('plotResult', data, layout);              
+                </script>
+                <div id="plotResultQueueLeft"></div>
+                <script>
+                    var trace1 = {{
+                        x: [{CountQueueLeft}],
+                        y: [{ValuesQueueLeft}],
+                        mode: 'lines+markers'
+                    }};
+                    var data = [trace1];
+                    var layout = {{
+                        title:'Verlauf Warteschlange Links'
+                    }};
+                    Plotly.newPlot('plotResultQueueLeft', data, layout);              
+                </script>
+                <div id="plotResultQueueRight"></div>
+                <script>
+                    var trace1 = {{
+                        x: [{CountQueueRight}],
+                        y: [{ValuesQueueRight}],
+                        mode: 'lines+markers'
+                    }};
+                    var data = [trace1];
+                    var layout = {{
+                        title:'Verlauf Warteschlange Rechts'
+                    }};
+                    Plotly.newPlot('plotResultQueueRight', data, layout);              
+                </script>
+                <div id="plotResultMic"></div>
+                <script>
+                    var trace1 = {{
+                        x: [{CountMic}],
+                        y: [{ValuesMic}],
+                        mode: 'lines+markers'
+                    }};
+                    var data = [trace1];
+                    var layout = {{
+                        title:'Verlauf Mikrofon'
+                    }};
+                    Plotly.newPlot('plotResultMic', data, layout);              
                 </script>
                <!-- <script src="tester.js"></script>-->
             </div>
