@@ -55,7 +55,6 @@ class MyHandler(BaseHTTPRequestHandler):
 
         message = ""
         if(str(path) == "/current"):
-            print("test")
             data = ""
             with open(CURRENTDATA, "r") as f:
                 nodeData = f.readlines()
@@ -63,6 +62,31 @@ class MyHandler(BaseHTTPRequestHandler):
                 debugData = f.read()
             with open("main.html", "r") as f:
                 main = f.read()
+            with open(PLOTRESULT, "r") as f:
+                plotResult = f.readlines()
+            valuesResult, countResult = self.convertResult(plotResult)
+            with open(CURRENTMOVEMENT, "r") as f:
+                movement = f.readlines()
+
+            if(str(movement[0]) == "1"):
+                movementLeft = "Warteschlange <b>links</b> <font color=green>bewegt sich</font>"
+            else:
+                movementLeft = "Warteschlange <b>links</b> <font color=red>bewegt sich nicht</font>"
+
+            if(str(movement[1]) == "1"):
+                movementRight = "Warteschlange <b>rechts</b> <font color=green>bewegt sich</font>"
+            else:
+                movementRight = "Warteschlange <b>rechts</b> <font color=red>bewegt sich nicht</font>"
+
+            message = main.format(Percentage=nodeData[0], Count=countResult, Values=valuesResult, MovementLeft=movementLeft, MovementRight=movementRight)
+        elif(str(path) == "/dev"):
+            data = ""
+            with open(CURRENTDATA, "r") as f:
+                nodeData = f.readlines()
+            with open(DEBUGDATA, "r") as f:
+                debugData = f.read()
+            with open("dev.html", "r") as f:
+                dev = f.read()
             with open(PLOTRESULT, "r") as f:
                 plotResult = f.readlines()
             valuesResult, countResult = self.convertResult(plotResult)
@@ -78,12 +102,10 @@ class MyHandler(BaseHTTPRequestHandler):
             with open(CURRENTMOVEMENT, "r") as f:
                 movement = f.readlines()
 
-            message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
-        elif(str(path) == "/dev"):
-            with open("dev.html", "r") as f:
-                dev = f.read()
 
-            message = dev
+            message = dev.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
+
+            #message = dev
 
         self.wfile.write(bytes(message, 'UTF-8'))
 
