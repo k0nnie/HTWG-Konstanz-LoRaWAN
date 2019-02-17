@@ -37,9 +37,9 @@ MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1
 SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
 #gewichtung fuer endgueltige berechnung
-WEIGHT_DISTANCE_LEFT = 3
-WEIGHT_DISTANCE_RIGHT = 3
-WEIGHT_MIC_DATA = 1
+#WEIGHT_DISTANCE_LEFT = 3
+#WEIGHT_DISTANCE_RIGHT = 3
+#WEIGHT_MIC_DATA = 1
 
 def readCurData():
     with open (NODEDATA, 'r+') as f:
@@ -141,7 +141,6 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
     countLastQueueLeft = 0
     countLastQueueRight = 0
     foundZero = False
-
     #average for every device (left and right), can be multiple values per message
     for device in devices:
         values = deviceValues[device]
@@ -155,14 +154,12 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
             sumRight = sumRight + element
         left.append(sumLeft / len(tmpLeft))
         right.append(sumRight / len(tmpRight))
-
     #writes current data in file lastdata for next step
     with open (LASTDATA, "w+") as f:
         f.write(str(left) + "\n")
         f.write(str(right))
 
     writeDebugData(left, right)
-
     #calculates actual queue and count of 1 in current Left
     for ele in left:
         if ele >= SENSOR_SENSITIVITY:
@@ -229,8 +226,7 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
             if(countRestQueue < 2):
                 if(right[countLastQueueRight - 1] >= SENSOR_SENSITIVITY):
                     queueRight = countLastQueueRight
-
-    return queueLeft, queueRight
+    return queueLeft, queueRight, countQueueLeft, countQueueRight
 
 def evaluateDistanceData(data, lastDataLeft, lastDataRight):
     devices = []
@@ -243,11 +239,22 @@ def evaluateDistanceData(data, lastDataLeft, lastDataRight):
         deviceValues[device] = transformDistanceData(data[device])
     return getResult(deviceValues, devices, lastDataLeft, lastDataRight)
 
-def evaluateData(micData, leftQueue, rightQueue):
+def calculateWeight(countQueueLeft, countQueueRight):
+    if(countQueueLeft == 0 and countQueueRight == 0):
+        weightDistanceLeft = 0
+        weightDistanceRight = 0
+        weightMicData = 3
+    else:
+        weightDistanceLeft = 3
+        weightDistanceRight = 3
+        weightMicData = 1
+    return weightDistanceLeft, weightDistanceRight, weightMicData
+
+def evaluateData(micData, leftQueue, rightQueue, weightDistanceLeft, weightDistanceRight, weightMicData):
     resultLeftQueue = leftQueue * 20
     resultRightQueue = rightQueue * 20
     resultMic = micData * 20
-    result = round(((leftQueue * WEIGHT_DISTANCE_LEFT + rightQueue * WEIGHT_DISTANCE_RIGHT + micData * WEIGHT_MIC_DATA) / (WEIGHT_DISTANCE_LEFT + WEIGHT_DISTANCE_RIGHT + WEIGHT_MIC_DATA)) * 20, 2)
+    result = round(((leftQueue * weightDistanceLeft + rightQueue * weightDistanceRight + micData * weightMicData) / (weightDistanceLeft + weightDistanceRight + weightMicData) * 20), 2)
     os.remove(CURRENTDATA)
     with open(CURRENTDATA, "w+") as f:
         f.write(str(result)+"\n")
@@ -256,6 +263,12 @@ def evaluateData(micData, leftQueue, rightQueue):
         f.write(str(resultMic))
     with open(PLOTRESULT, "a+") as f:
         f.write(str(result)+"\n")
+    with open(PLOTRESULTQUEUELEFT, "a+") as f:
+        f.write(str(resultLeftQueue) + "\n")
+    with open(PLOTRESULTQUEUERIGHT, "a+") as f:
+        f.write(str(resultRightQueue) + "\n")
+    with open(PLOTRESULTMIC, "a+") as f:
+        f.write(str(resultMic) + "\n")
 
 def writeDebugData(leftQueue, rightQueue):
     with open(DEBUGDATA, "w+") as f:
@@ -266,8 +279,9 @@ def main():
     data = readCurData()
     lastDataLeft, lastDataRight = readLastData()
     micData = evaluateMicData(data)
-    leftQueue, rightQueue = evaluateDistanceData(data, lastDataLeft, lastDataRight)
-    evaluateData(micData, leftQueue, rightQueue)
+    leftQueue, rightQueue, countQueueLeft, countQueueRight = evaluateDistanceData(data, lastDataLeft, lastDataRight)
+    weightDistanceLeft, weightDistanceRight, weightMicData = calculateWeight(countQueueLeft, countQueueRight)
+    evaluateData(micData, leftQueue, rightQueue, weightDistanceLeft, weightDistanceRight, weightMicData)
 
 if __name__ == "__main__":
   main()
