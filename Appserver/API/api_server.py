@@ -6,6 +6,7 @@ HOST_NAME = '192.52.33.75'
 PORT_NUMBER = 8080
 
 CURRENTDATA = "../currentdata"
+CURRENTMOVEMENT = "../currentMovement"
 DEBUGDATA = "../debugData"
 PLOTRESULT = "../plotResult"
 PLOTRESULTQUEUELEFT = "../plotResultQueueLeft"
@@ -69,8 +70,10 @@ class MyHandler(BaseHTTPRequestHandler):
         with open(PLOTRESULTMIC, "r") as f:
             plotResultMic = f.readlines()
         valuesResultMic, countResultMic = self.convertResult(plotResultMic)
+        with open(CURRENTMOVEMENT, "r") as f:
+            movement = f.readlines()
 
-        message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic)
+        message = main.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
         self.wfile.write(bytes(message, 'UTF-8'))
 
 if __name__ == '__main__':

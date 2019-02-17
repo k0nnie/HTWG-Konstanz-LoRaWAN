@@ -8,9 +8,11 @@ import subprocess
 import sys
 import base64
 import codecs
+import numpy as np
 
 NODEDATA = 'nodedata'
 CURRENTDATA = 'currentdata'
+CURRENTMOVEMENT = 'currentMovement'
 LASTDATA = 'lastData'
 DEBUGDATA = 'debugData'
 PLOTRESULT = 'plotResult'
@@ -36,6 +38,8 @@ MIC_4 = 180
 MIN_DISTANCE_TRIGGER = 150 #value for distance sensor that counts as 1
 SENSOR_SENSITIVITY = 0.5 #mean of 1, 0 values that we count as people standing in front of the sensor over a period of time
 
+STD_DISTANCE = 20
+MOVEMENT_COUNT = 2
 #gewichtung fuer endgueltige berechnung
 #WEIGHT_DISTANCE_LEFT = 3
 #WEIGHT_DISTANCE_RIGHT = 3
@@ -116,18 +120,27 @@ def calculateDistance(value):
     return result
 
 def transformDistanceData(dist):
+    print("trans")
     values = []
+    rawResult = []
     result = []
     values = [dist[i:i+2] for i in range(0, len(dist), 2)] #splits payload into bytes
     for value in values:
         value = int(value, 16)
+        rawResult.append(value)
         value = calculateDistance(value)
         result.append(value)
-    return result[:int(len(result)/2)], result[int(len(result)/2):] #splits list in left and right at n/2 elements
+    print("trans2")
+    result = result[:int(len(result)/2)],result[int(len(result)/2):]
+    rawResult = rawResult[:int(len(rawResult)/2)],rawResult[int(len(rawResult)/2):]
+    return result, rawResult #, rawResult[:int(len(rawResult)/2)], rawResult[int(len(rawResult)/2):] #splits list in left and right at n/2 elements
 
-def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
+def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight):
+    print("resullt")
     left = []
     right = []
+    movementLeft = 0
+    movementRight = 0
     #laenge der wirklichen queue
     queueLeft = 0
     queueRight = 0
@@ -146,6 +159,17 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
         values = deviceValues[device]
         tmpLeft = values[0]
         tmpRight = values[1]
+        rawValues = rawDeviceValues[device]
+        rawTmpLeft = rawValues[0]
+        rawTmpRight = rawValues[1]
+        stdLeft = np.std(rawTmpLeft)
+        stdRight = np.std(rawTmpRight)
+        if(stdLeft >= STD_DISTANCE):
+            movementLeft = movementLeft + 1
+        if(stdRight >= STD_DISTANCE):
+            movementRight = movementRight + 1
+        print("movementL: " + str(movementLeft))
+        print("std: " + str(stdLeft))
         sumLeft = 0
         sumRight = 0
         for element in tmpLeft: #same amount of values in tmpLeft and tmpRight
@@ -158,6 +182,18 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
     with open (LASTDATA, "w+") as f:
         f.write(str(left) + "\n")
         f.write(str(right))
+
+    if(movementLeft >= MOVEMENT_COUNT):
+        movementLeft = 1
+    else:
+        movementLeft = 0
+    if(movementRight >= MOVEMENT_COUNT):
+        movementRight = 1
+    else:
+        movementRight = 0 
+    with open(CURRENTMOVEMENT, "w+") as f:
+        f.write(str(movementLeft) + "\n")
+        f.write(str(movementRight))
 
     writeDebugData(left, right)
     #calculates actual queue and count of 1 in current Left
@@ -229,15 +265,19 @@ def getResult(deviceValues, devices, lastDataLeft, lastDataRight):
     return queueLeft, queueRight, countQueueLeft, countQueueRight
 
 def evaluateDistanceData(data, lastDataLeft, lastDataRight):
+    print("ev1")
     devices = []
     deviceValues = {}
+    rawDeviceValues = {}
     for entry in data:
         if "dist" in entry:
             devices.append(entry)
     devices.sort()
     for device in devices:
-        deviceValues[device] = transformDistanceData(data[device])
-    return getResult(deviceValues, devices, lastDataLeft, lastDataRight)
+        deviceValues[device], rawDeviceValues[device] = transformDistanceData(data[device])
+        print("test" + str(deviceValues[device]))
+    print(str(deviceValues))
+    return getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight)
 
 def calculateWeight(countQueueLeft, countQueueRight):
     if(countQueueLeft == 0 and countQueueRight == 0):
@@ -282,6 +322,7 @@ def main():
     leftQueue, rightQueue, countQueueLeft, countQueueRight = evaluateDistanceData(data, lastDataLeft, lastDataRight)
     weightDistanceLeft, weightDistanceRight, weightMicData = calculateWeight(countQueueLeft, countQueueRight)
     evaluateData(micData, leftQueue, rightQueue, weightDistanceLeft, weightDistanceRight, weightMicData)
+    print("main finish")
 
 if __name__ == "__main__":
   main()
