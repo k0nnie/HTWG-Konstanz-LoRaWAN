@@ -150,7 +150,7 @@ def transformDistanceData(dist):
     rawResult = rawResult[:int(len(rawResult)/2)],rawResult[int(len(rawResult)/2):]
     return result, rawResult #, rawResult[:int(len(rawResult)/2)], rawResult[int(len(rawResult)/2):] #splits list in left and right at n/2 elements
 
-def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight):
+def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight, rawMic):
     print("resullt")
     left = []
     right = []
@@ -205,6 +205,7 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
     with open(RAWDATA, "w+") as f:
         f.write(str(rawLeft) + "\n")
         f.write(str(rawRight) + "\n")
+        f.write(str(rawMic))
 
     if(movementLeft >= MOVEMENT_COUNT):
         movementLeft = 1
@@ -289,7 +290,7 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
                     queueRight = countLastQueueRight
     return queueLeft, queueRight, countQueueLeft, countQueueRight
 
-def evaluateDistanceData(data, lastDataLeft, lastDataRight):
+def evaluateDistanceData(data, lastDataLeft, lastDataRight, rawMic):
     print("ev1")
     devices = []
     deviceValues = {}
@@ -302,7 +303,7 @@ def evaluateDistanceData(data, lastDataLeft, lastDataRight):
         deviceValues[device], rawDeviceValues[device] = transformDistanceData(data[device])
         print("test" + str(deviceValues[device]))
     print(str(deviceValues))
-    return getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight)
+    return getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRight, rawMic)
 
 def calculateWeight(countQueueLeft, countQueueRight):
     if(countQueueLeft == 0 and countQueueRight == 0):
@@ -344,7 +345,7 @@ def main():
     data = readCurData()
     lastDataLeft, lastDataRight = readLastData()
     micData, rawMic = evaluateMicData(data)
-    leftQueue, rightQueue, countQueueLeft, countQueueRight = evaluateDistanceData(data, lastDataLeft, lastDataRight)
+    leftQueue, rightQueue, countQueueLeft, countQueueRight = evaluateDistanceData(data, lastDataLeft, lastDataRight, rawMic)
     weightDistanceLeft, weightDistanceRight, weightMicData = calculateWeight(countQueueLeft, countQueueRight)
     evaluateData(micData, leftQueue, rightQueue, weightDistanceLeft, weightDistanceRight, weightMicData)
     print("main finish")
