@@ -1,6 +1,7 @@
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import numpy as np
 
 HOST_NAME = '192.52.33.75'
 PORT_NUMBER = 8080
@@ -12,6 +13,7 @@ PLOTRESULT = "../plotResult"
 PLOTRESULTQUEUELEFT = "../plotResultQueueLeft"
 PLOTRESULTQUEUERIGHT = "../plotResultQueueRight"
 PLOTRESULTMIC = "../plotResultMic"
+RAWDATA = "../rawData"
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
@@ -48,6 +50,18 @@ class MyHandler(BaseHTTPRequestHandler):
 
         return values, count
 
+    def convertMovement(self, movement):
+        if(str(movement[0]) == "1\n"):
+            movementLeft = "Warteschlange <b>links</b> <font color=green>bewegt sich</font>"
+        else:
+            movementLeft = "Warteschlange <b>links</b> <font color=red>bewegt sich nicht</font>"
+
+        if(str(movement[1]) == "1"):
+            movementRight = "Warteschlange <b>rechts</b> <font color=green>bewegt sich</font>"
+        else:
+            movementRight = "Warteschlange <b>rechts</b> <font color=red>bewegt sich nicht</font>"
+        return movementLeft, movementRight
+
     def handle_http(self, status_code, path):
         self.send_response(status_code)
         self.send_header('Content-type', 'text/html')
@@ -68,16 +82,7 @@ class MyHandler(BaseHTTPRequestHandler):
             with open(CURRENTMOVEMENT, "r") as f:
                 movement = f.readlines()
 
-            if(str(movement[0]) == "1"):
-                movementLeft = "Warteschlange <b>links</b> <font color=green>bewegt sich</font>"
-            else:
-                movementLeft = "Warteschlange <b>links</b> <font color=red>bewegt sich nicht</font>"
-
-            if(str(movement[1]) == "1"):
-                movementRight = "Warteschlange <b>rechts</b> <font color=green>bewegt sich</font>"
-            else:
-                movementRight = "Warteschlange <b>rechts</b> <font color=red>bewegt sich nicht</font>"
-
+            movementLeft, movementRight = self.convertMovement(movement)
             message = main.format(Percentage=nodeData[0], Count=countResult, Values=valuesResult, MovementLeft=movementLeft, MovementRight=movementRight)
         elif(str(path) == "/dev"):
             data = ""
@@ -101,9 +106,15 @@ class MyHandler(BaseHTTPRequestHandler):
             valuesResultMic, countResultMic = self.convertResult(plotResultMic)
             with open(CURRENTMOVEMENT, "r") as f:
                 movement = f.readlines()
+            with open(RAWDATA, "r") as f:
+                rawData = f.readlines()
 
+           # print(str(plotResult))
+           # valuesResult = np.fft.fft(plotResult)
+           # print(str(valuesResult))
 
-            message = dev.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movement[0], MovementRight=movement[1])
+            movementLeft, movementRight = self.convertMovement(movement)
+            message = dev.format(Percentage=nodeData[0] ,PercentageQueueLeft=nodeData[1], PercentageQueueRight=nodeData[2], PercentageMic=nodeData[3], Count=countResult, Values=valuesResult, CountQueueLeft=countResultQueueLeft, ValuesQueueLeft=valuesResultQueueLeft, CountQueueRight=countResultQueueRight, ValuesQueueRight=valuesResultQueueRight, CountMic=countResultMic, ValuesMic=valuesResultMic, MovementLeft=movementLeft, MovementRight=movementRight, RawDataLeft=rawData[0], RawDataRight=rawData[1], RawDataMic=rawData[2])
 
             #message = dev
 
