@@ -19,6 +19,7 @@ PLOTRESULT = 'plotResult'
 PLOTRESULTQUEUELEFT = 'plotResultQueueLeft'
 PLOTRESULTQUEUERIGHT = 'plotResultQueueRight'
 PLOTRESULTMIC = 'plotResultMic'
+RAWDATA = 'rawData'
 
 #index to get specifc data of uplink msg
 APP_ID=0
@@ -49,10 +50,17 @@ def readCurData():
     with open (NODEDATA, 'r+') as f:
         lines = f.readlines()
         deviceandmessage = {}
+        retry = False
         for line in lines:
+            retry = False
+            if("is_retry" in line):
+                retry = True
             line = line.split(",")
-            #if message isnt older than 5minutes?
-            payload = str(line[PAYLOAD_RAW])[14:-1]
+            if(retry):
+                print("retry")
+                payload = str(line[PAYLOAD_RAW + 1])[14:-1]
+            else:
+                payload = str(line[PAYLOAD_RAW])[14:-1]
             device = str(line[DEV_ID])[9:-1]
             deviceandmessage[device] = payloadConverter(payload)
     return deviceandmessage
@@ -75,12 +83,14 @@ def readLastData():
 
 def meanMic(mic):
     values = []
+    rawData = []
     values = [mic[i:i+2] for i in range(0, len(mic), 2)]
     mean = 0
     for value in values:
         mean = mean + int(value, 16)
+        rawData.append(int(value, 16))
     mean = mean / len(values)
-    return mean
+    return mean, rawData
 
 def volume(mean):
     volume = 0
@@ -98,15 +108,20 @@ def volume(mean):
 
 def evaluateMicData(data):
     mics = []
+    rawMic = []
     for entry in data:
         if "mic" in entry:
             mics.append(entry)
+    print(str(data[mics[0]]))
     mean = 0
     for mic in mics:
-        mean = mean + meanMic(data[mic])
+        micMean, rawData = meanMic(data[mic])
+        mean = mean + micMean
+        rawMic.append(rawData)
+    print(str(rawMic))
     mean = mean / len(mics)
     result = volume(mean)
-    return result
+    return result, rawMic
 
 def payloadConverter(payload):
     decoded = base64.b64decode(payload) #now in hex representation
@@ -139,6 +154,8 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
     print("resullt")
     left = []
     right = []
+    rawLeft = []
+    rawRight = []
     movementLeft = 0
     movementRight = 0
     #laenge der wirklichen queue
@@ -162,6 +179,8 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
         rawValues = rawDeviceValues[device]
         rawTmpLeft = rawValues[0]
         rawTmpRight = rawValues[1]
+        rawLeft.append(rawValues[0])
+        rawRight.append(rawValues[1])
         stdLeft = np.std(rawTmpLeft)
         stdRight = np.std(rawTmpRight)
         if(stdLeft >= STD_DISTANCE):
@@ -183,6 +202,10 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
         f.write(str(left) + "\n")
         f.write(str(right))
 
+    with open(RAWDATA, "w+") as f:
+        f.write(str(rawLeft) + "\n")
+        f.write(str(rawRight) + "\n")
+
     if(movementLeft >= MOVEMENT_COUNT):
         movementLeft = 1
     else:
@@ -190,7 +213,9 @@ def getResult(deviceValues, rawDeviceValues, devices, lastDataLeft, lastDataRigh
     if(movementRight >= MOVEMENT_COUNT):
         movementRight = 1
     else:
-        movementRight = 0 
+        movementRight = 0
+    print("mL" + str(movementLeft))
+    print("mR" + str(movementRight))
     with open(CURRENTMOVEMENT, "w+") as f:
         f.write(str(movementLeft) + "\n")
         f.write(str(movementRight))
@@ -318,7 +343,7 @@ def writeDebugData(leftQueue, rightQueue):
 def main():
     data = readCurData()
     lastDataLeft, lastDataRight = readLastData()
-    micData = evaluateMicData(data)
+    micData, rawMic = evaluateMicData(data)
     leftQueue, rightQueue, countQueueLeft, countQueueRight = evaluateDistanceData(data, lastDataLeft, lastDataRight)
     weightDistanceLeft, weightDistanceRight, weightMicData = calculateWeight(countQueueLeft, countQueueRight)
     evaluateData(micData, leftQueue, rightQueue, weightDistanceLeft, weightDistanceRight, weightMicData)
