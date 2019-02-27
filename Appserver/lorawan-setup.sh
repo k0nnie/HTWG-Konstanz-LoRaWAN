@@ -6,3 +6,4 @@ sudo apt-get install python3-pip
 pip3 install 'ttn<3'
 #cd HTWG-Konstanz-LoRaWAN/Appserver
 #sudo dpkg-reconfigure tzdata  ######select Europe/Berlin#######
+crontab mycrontab
