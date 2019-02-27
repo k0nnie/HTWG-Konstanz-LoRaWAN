@@ -2,8 +2,8 @@ import time
 import ttn
 import evaluateData
 
-app_id = "htwg-konstanz-testapp-2"
-access_key = "ttn-account-v2.ovmX0Bec96ipOedV41TcPP7xDlj-iuiV95DeVdS3HYU"
+app_id = "htwg-konstanz-testapp"
+access_key = "ttn-account-v2.d7Q2pGiB97SPJFjr_WphmoaZKctmJRE93MhC6T9rP-g"
 
 def uplink_callback(msg, client):
   print("Received uplink from ", msg.dev_id)
